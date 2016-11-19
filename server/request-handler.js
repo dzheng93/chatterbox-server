@@ -73,8 +73,10 @@ module.exports.requestHandler = function(request, response) {
       response.writeHead(statusCode, headers);
       response.end();
     }
-
-    
+  } else {
+    statusCode = 404;
+    response.writeHead(statusCode, headers);
+    response.end();
   }
   // See the note below about CORS headers.
   // Tell the client we are sending them plain text.
@@ -91,6 +93,6 @@ module.exports.requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end(JSON.stringify('hi'));
+  // response.end(JSON.stringify('hi'));
   
 };
