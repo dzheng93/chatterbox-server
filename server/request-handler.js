@@ -29,7 +29,7 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
-var messages = {results: [{username: 'Fred', roomname: 'lobby', text: 'Welcome'}]};
+var messages = {results: [{username: 'Fred', roomname: 'lobby', text: 'Fred was here'}]};
 
 module.exports.requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -49,7 +49,10 @@ module.exports.requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   // The outgoing status.
-  var statusCode = 200;
+  var GETStatus = 200;
+  var POSTStatus = 201;
+  var FAILStatus = 404;
+  var UNALLOWStatus = 405; 
 
   // check the endpoint
   var headers = defaultCorsHeaders;
@@ -58,19 +61,23 @@ module.exports.requestHandler = function(request, response) {
   if (request.url === '/classes/messages') {
     //
     if (request.method === 'GET' || request.method === 'OPTIONS') {
-      response.writeHead(statusCode, headers);
-      response.end(JSON.stringify(messages));
+      response.writeHead(GETStatus, headers);
+      // only return thirty most recent posted messages
+      var recentMsgs = messages.results.slice(0, 29);
+      var returnToClient = {results: recentMsgs};
+      response.end(JSON.stringify(returnToClient));
     } else if (request.method === 'POST') {
       request.on('data', function (data) {
         messages.results.unshift(JSON.parse(data));
       });
-      statusCode = 201;
-      response.writeHead(statusCode, headers);
-      response.end('{"success" : "Updated Successfully", "status" : 200}');
+      response.writeHead(POSTStatus, headers);
+      response.end('{"success" : "Updated Successfully", "status" : 201}');
+    } else if (request.method === 'DELETE') {
+      response.writeHead(UNALLOWStatus, headers);
+      response.end('405 Method Not Allowed - Message Atom');
     } 
   } else {
-    statusCode = 404;
-    response.writeHead(statusCode, headers);
-    response.end();
+    response.writeHead(FAILStatus, headers);
+    response.end('404 Not Found');
   }  
 };

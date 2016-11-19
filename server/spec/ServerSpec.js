@@ -44,6 +44,40 @@ describe('Node Server Request Listener Function', function() {
     expect(res._ended).to.equal(true);
   });
 
+  it('Should only return the most recent 30 messages', function() {
+    var total = 50;
+    var messages = [];
+    for (var i = 0; i < total; i++) {
+      var stubMsg = {
+        username: 'Jono',
+        message: i
+      };
+      var request = new stubs.request('/classes/messages', 'POST', stubMsg);
+      var res = new stubs.response();
+      handler.requestHandler(request, res);
+      messages.unshift(stubMsg);
+    }
+
+    // build a get request
+    var req = new stubs.request('/classes/messages', 'GET');
+    var res = new stubs.response();
+    // submit get request
+    handler.requestHandler(req, res);
+
+    // check result data from get request
+    var parsedBody = JSON.parse(res._data);
+    var results = parsedBody.results;
+
+    // 19th index is the 20th element
+    var expectArray = messages.slice(0, 29);
+
+    for (var i = 0; i < results.length; i ++) {
+      expect(results[i].message).to.equal(expectArray[i].message);
+    }
+    
+    expect(res._ended).to.equal(true);
+  });
+
   it('Should send an object containing a `results` array', function() {
     var req = new stubs.request('/classes/messages', 'GET');
     var res = new stubs.response();
@@ -116,4 +150,17 @@ describe('Node Server Request Listener Function', function() {
       });
   });
 
+  it('Should 405 delete request (Not allowed by client)', function() {
+    var req = new stubs.request('/classes/messages', 'DELETE');
+    var res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    // Wait for response to return and then check status code
+    waitForThen(
+      function() { return res._ended; },
+      function() {
+        expect(res._responseCode).to.equal(405);
+      });
+  });
 });
