@@ -22,6 +22,8 @@ this file and include it in basic-server.js so that it actually works.
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 
+var crypto = require('crypto');
+
 var defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -59,7 +61,6 @@ module.exports.requestHandler = function(request, response) {
   headers['Content-Type'] = 'application/json';
 
   if (request.url === '/classes/messages') {
-    //
     if (request.method === 'GET' || request.method === 'OPTIONS') {
       response.writeHead(GETStatus, headers);
       // only return thirty most recent posted messages
@@ -67,11 +68,19 @@ module.exports.requestHandler = function(request, response) {
       var returnToClient = {results: recentMsgs};
       response.end(JSON.stringify(returnToClient));
     } else if (request.method === 'POST') {
+
       request.on('data', function (data) {
-        messages.results.unshift(JSON.parse(data));
+        var currentDate = (new Date()).valueOf().toString();
+        var random = Math.random().toString();
+        var uniqueN = crypto.createHash('sha1').update(currentDate + random).digest('hex');
+        var newMsg = JSON.parse(data);
+
+        newMsg.createdAt = currentDate;
+        newMsg.objectId = uniqueN;
+        messages.results.unshift(newMsg);
       });
       response.writeHead(POSTStatus, headers);
-      response.end('{"success" : "Updated Successfully", "status" : 201}');
+      response.end(JSON.stringify({success: "Updated Successfully", status: 201}));
     } else if (request.method === 'DELETE') {
       response.writeHead(UNALLOWStatus, headers);
       response.end('405 Method Not Allowed - Message Atom');
