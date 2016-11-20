@@ -31,7 +31,7 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
-var messages = {results: [{username: 'Fred', roomname: 'lobby', text: 'Fred was here'}]};
+var messages = {results: [{username: 'Fred', roomname: 'lobby', text: 'Fred was here', objectId: 1337, createdAt: 1969}]};
 
 module.exports.requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -79,8 +79,12 @@ module.exports.requestHandler = function(request, response) {
         newMsg.objectId = uniqueN;
         messages.results.unshift(newMsg);
       });
-      response.writeHead(POSTStatus, headers);
-      response.end(JSON.stringify({success: "Updated Successfully", status: 201}));
+
+      request.on('end', function () {
+        response.writeHead(POSTStatus, headers);
+        response.end(JSON.stringify(messages));
+      });
+      
     } else if (request.method === 'DELETE') {
       response.writeHead(UNALLOWStatus, headers);
       response.end('405 Method Not Allowed - Message Atom');

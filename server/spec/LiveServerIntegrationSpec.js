@@ -83,4 +83,23 @@ describe('server', function() {
       done();
     });
   });
+
+  it('Should send back data with objectId and date property', function(done) {
+    var requestParams = {method: 'POST',
+      uri: 'http://127.0.0.1:3000/classes/messages',
+      json: {
+        username: 'Jono',
+        message: 'Do my bidding!'}
+    };
+
+    request(requestParams, function(error, response, body) {
+      // Now if we request the log, that message we posted should be there:
+      request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+        var messages = JSON.parse(body).results;
+        expect(messages[0]).to.have.property('objectId');
+        expect(messages[0]).to.to.have.property('createdAt');
+        done();
+      });
+    });
+  });
 });
